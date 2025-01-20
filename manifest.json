@@ -1,0 +1,32 @@
+{
+    "manifest_version": 1,
+    "name": "LyricsToPort",
+    "version": "0.0.1",
+    "author": "Yueby",
+    "description": "将歌词发送到指定端口",
+    "betterncm_version": ">=0.2.5",
+    "preview": "preview.png",
+    "loadAfter": [
+        "liblyric",
+        "RefinedNowPlaying"
+    ],
+    "requirements": [
+        "liblyric"
+    ],
+    "injects": {
+        "Main": [
+            {
+                "file": "./dist/const.js"
+            },
+            {
+                "file": "./dist/main.js"
+            },
+            {
+                "file": "./dist/lyric.js"
+            },
+            {
+                "file": "./dist/websocket.js"
+            }
+        ]
+    }
+}
