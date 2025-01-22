@@ -16,16 +16,7 @@
     "injects": {
         "Main": [
             {
-                "file": "./dist/const.js"
-            },
-            {
                 "file": "./dist/main.js"
-            },
-            {
-                "file": "./dist/lyric.js"
-            },
-            {
-                "file": "./dist/websocket.js"
             }
         ]
     }

@@ -1,5 +1,3 @@
-/// <reference types="./types/global" />
-
 export interface DynamicLyricWord {
 	time: number;
 	duration: number;
@@ -32,7 +30,7 @@ interface EAPILyric {
 	lyric: string;
 }
 
-interface EAPILyricResponse extends EAPIResponse {
+export interface EAPILyricResponse extends EAPIResponse {
 	lrc?: EAPILyric;
 	tlyric?: EAPILyric;
 	romalrc?: EAPILyric;
@@ -382,10 +380,10 @@ export function processLyric(lyric: LyricLine[]): LyricLine[] {
 	return result;
 }
 
-plugin.onLoad((injectPlugin) => {
-	const plugin = injectPlugin.mainPlugin;
-	plugin.parseLyric = parseLyric;
-	plugin.getLyricData = getLyricData;
-	plugin.parsePureLyric = parsePureLyric;
-	plugin.parsePureDynamicLyric = parsePureDynamicLyric;
-});
+// plugin.onLoad((injectPlugin) => {
+// 	const plugin = injectPlugin.mainPlugin;
+// 	plugin.parseLyric = parseLyric;
+// 	plugin.getLyricData = getLyricData;
+// 	plugin.parsePureLyric = parsePureLyric;
+// 	plugin.parsePureDynamicLyric = parsePureDynamicLyric;
+// });
