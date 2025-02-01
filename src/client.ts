@@ -1,6 +1,6 @@
-import { BaseMessage, ErrorMessage, LyricData, LyricMessage, MessageType, PlayStateMessage, PLUGIN_NAME, ProgressMessage, SongInfo, SongMessage } from "./const";
+import { BaseMessage, LyricData, LyricMessage, MessageType, PlayStateMessage, PLUGIN_NAME, ProgressMessage, SongInfo, SongMessage } from "./const";
 
-export class LyricServer {
+export class LyricClient {
     private port: number;
     private isConnected = false;
     private readonly reconnectTimeout = 3000; // 重连间隔

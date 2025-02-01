@@ -8,12 +8,12 @@ import {
     SOURCE_NAMES
 } from "./const";
 import { processLyrics } from "./lyric";
-import { LyricServer } from "./server";
+import { LyricClient } from "./client";
 import { Config } from "./ui/config";
 import { throttle } from "./utils";
 import { monitorEvents } from "./utils/events";
 
-let lyricServer: LyricServer | null = null;
+let lyricClient: LyricClient | null = null;
 
 // 缓存当前歌词数据
 let currentLyrics: LyricData | null = null;
@@ -99,9 +99,9 @@ async function handleSongChange() {
     });
 
     // 发送数据
-    await lyricServer?.sendSongInfo(songInfo);
-    await lyricServer?.sendLyric(lyrics);
-    await lyricServer?.sendPlayState(lastPlayState);
+    await lyricClient?.sendSongInfo(songInfo);
+    await lyricClient?.sendLyric(lyrics);
+    await lyricClient?.sendPlayState(lastPlayState);
 }
 
 // 监听播放进度
@@ -120,7 +120,7 @@ const handleProgress = throttle((_, time: number) => {
     });
 
     // 发送数据
-    lyricServer?.sendProgress(msTime, songInfo.duration);
+    lyricClient?.sendProgress(msTime, songInfo.duration);
 }, 100);
 
 // 监听播放状态
@@ -138,7 +138,7 @@ const handlePlayState = async (evt: unknown, playStateData: string) => {
     lastPlayState = state;
 
     // 发送数据
-    lyricServer?.sendPlayState(state);
+    lyricClient?.sendPlayState(state);
 };
 
 // 监听播放进度和状态
@@ -160,24 +160,45 @@ function stopPlaybackMonitor() {
     legacyNativeCmder.removeRegisterCall("PlayState", "audioplayer");
 }
 
+// 配置界面
+plugin.onConfig(() => {
+    const element = document.createElement("div");
+    ReactDOM.render(React.createElement(Config, {
+        onSave: async port => {
+            await saveConfig(CONFIG_KEYS.PORT, port);
+            await lyricClient?.updatePort(port);
+        },
+        onLyricSourceChange: async source => {
+            await saveConfig(CONFIG_KEYS.LYRIC_SOURCE, source);
+            // 重新获取歌词
+            await handleSongChange();
+        },
+        defaultPort: DEFAULT_PORT,
+        defaultLyricSource: LyricSource.REFINED
+    }), element);
+    return element;
+});
+
 // 插件加载时执行
 plugin.onLoad(async () => {
     try {
         await waitForPlayingData();
         const savedPort = await getConfig(CONFIG_KEYS.PORT, DEFAULT_PORT);
 
-        // 启动歌词服务器
-        lyricServer = new LyricServer(savedPort);
+        // 启动歌词客户端
+        lyricClient = new LyricClient(savedPort);
 
         // 设置重连回调
-        lyricServer.onReconnect = async () => {
+        lyricClient.onReconnect = async () => {
             const songInfo = getCurrentSongInfo();
             if (!songInfo) {
                 return;
             }
-            await lyricServer?.sendSongInfo(songInfo);
-            await lyricServer?.sendLyric(currentLyrics);
-            await lyricServer?.sendPlayState(lastPlayState);
+            await lyricClient?.sendSongInfo(songInfo);
+            if (currentLyrics) {
+                await lyricClient?.sendLyric(currentLyrics);
+            }
+            await lyricClient?.sendPlayState(lastPlayState);
         };
 
         // 先发送初始信息
@@ -185,27 +206,15 @@ plugin.onLoad(async () => {
 
         // 再启动进度监听和状态监听
         startPlaybackMonitor();
+
+        // 注册清理函数
+        window.addEventListener('beforeunload', () => {
+            stopPlaybackMonitor();
+            lyricClient?.dispose();
+            lyricClient = null;
+        });
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
         console.error(`[${PLUGIN_NAME}] 插件加载失败:`, errorMessage);
     }
-});
-
-// 配置界面
-plugin.onConfig(() => {
-    const element = document.createElement("div");
-    ReactDOM.render(React.createElement(Config, {
-        onSave: async port => {
-            await betterncm.app.writeConfig(CONFIG_KEYS.PORT, port.toString());
-            console.log(`[${PLUGIN_NAME}] 端口已更新:`, port);
-            await lyricServer?.updatePort(port);
-        },
-        onLyricSourceChange: async source => {
-            await betterncm.app.writeConfig(CONFIG_KEYS.LYRIC_SOURCE, source.toString());
-            console.log(`[${PLUGIN_NAME}] 歌词来源已更新:`, source);
-        },
-        defaultPort: DEFAULT_PORT,
-        defaultLyricSource: LyricSource.REFINED
-    }), element);
-    return element;
 });
