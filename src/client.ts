@@ -3,7 +3,7 @@ import { BaseMessage, LyricData, LyricMessage, MessageType, PlayStateMessage, PL
 export class LyricClient {
     private port: number;
     private isConnected = false;
-    private readonly reconnectTimeout = 3000; // 重连间隔
+    private readonly reconnectTimeout = 200; // 重连间隔，改为0.2秒喵~
     private checkTimer?: number;  // 改用 number 类型
     private isReconnecting = false;  // 添加重连状态标记
     private lastReconnectTime = 0;   // 记录上次重连时间
